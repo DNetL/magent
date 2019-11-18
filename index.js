@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 const readline = require('readline');
 const http = require('http');
 const https = require('https');
@@ -6,6 +5,7 @@ const ca = require('./ca.js');
 const tls = require('tls');
 const net = require('net');
 const fs = require('fs');
+
 const logcb = (...args)=>console.log.bind(this,...args);
 const errcb = (...args)=>console.error.bind(this,...args);
 
@@ -64,20 +64,4 @@ const init = async()=>{
 	fs.writeFileSync('./config.json', JSON.stringify({uname,tname,u,t,bind,port,mport,mkey,mcert,scert}));
 	fs.writeFileSync('./ca.crt', mcert);
 }
-switch(process.argv[2]){
-	case 'proxy': proxy(); break;
-	case 'server': server(); break;
-	case 'init': init(); break;
-	default: logcb()
-(`Magent v1.0.1
-
-Setup: magent init
-Server: magent server
-Client: magent proxy
-Notice:
-  Only the HTTP(s) message can pass throuth this proxy
-  Import the root certifcate 'ca.crt' to your system or browser to let it work
-
-Copyright (c) 2019 DNetL <DNetL@pm.me>;
-Report Magent translation bugs to <https://github.com/DNetL/magent/issues>`);
-}
+module.exports = { proxy, server, init };
