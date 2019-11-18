@@ -1,28 +1,27 @@
-#MAGENT
-### A local MITM HTTP(s) request message proxy server
+# MAGENT #
+### A local MITM HTTP(s) request message proxy server ###
 This software implement a local
 Man In The Middle (MITM) proxy to capturing the request message and forward to remote host, It looks like an HTTP(s) proxy but only the HTTP(s) message can pass throuth it.
 
-#Installation
+# Installation #
 * git:
-	* clone this repo
+	* ```git clone https://github.com/DNetL/magent.git```
 	* ```npm i -g```
 * npm:
 	* ```npm i magent -g```
-#Run
-* generate the root certifcate: ```magent gen```
-* import certifcate ```ca.crt``` to your system or browser
+# Run #
+* Setup:
+	* ```magent init```
 * Client:
-	* set the local proxy: ```magent proxy init```
-	* start the local proxy: ```magent proxy```
+	* ```magent proxy```
 * Server:
-	* set the sever: ```magent server init```
-	* start the sever on remote host: ```magent server```
+	* ```magent server```
 
-#Notice
-* Only the HTTP(s) message can pass throuth the proxy
+# Notice #
+* Only the HTTP(s) message can pass throuth this proxy
+* Import the root certifcate 'ca.crt' to your system or browser to let it work
 
-#License
+# License #
 (The MIT License)
 
 Copyright (c) 2019 DNetL &lt;DNetL@pm.me&gt;
