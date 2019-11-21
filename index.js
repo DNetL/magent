@@ -1,7 +1,7 @@
 const readline = require('readline');
-const http = require('http');
+const cajs = require('./ca.js');
 const https = require('https');
-const ca = require('./ca.js');
+const http = require('http');
 const tls = require('tls');
 const net = require('net');
 const fs = require('fs');
@@ -12,16 +12,16 @@ const errcb = (...args)=>console.error.bind(this,...args);
 const reqPipe = (url,opts,res)=>require(url.protocol.slice(0,-1))
 	.request(url, opts, nRes=>{res.writeHead(nRes.statusCode, nRes.headers); nRes.pipe(res);})
 	.on('error', e=>{res.writeHead(500); res.end(e.message);}).end();
-const SNICallback = (host, cb)=>ca.cert(host).then(kp=>cb(null, tls.createSecureContext(kp)));
+const SNICallback = (host, cb)=>cajs.cert(host).then(kp=>cb(null, tls.createSecureContext(kp)));
 
-const proxy = async()=>{
-	let {uname,tname,u,t,bind,port,mport,mkey,mcert,scert}=JSON.parse(fs.readFileSync('./config.json'));
-	ca.load(mkey,mcert);
+const proxy = async(cpath,ca)=>{
+	const {uname,tname,u,t,bind,port,mport,kpair,cert}=JSON.parse(fs.readFileSync(cpath));
+	cajs.load(kpair);
 	const reqHandle = o=>(req, res)=>{
 		const {method, headers, url}=req;
 		const ourl=o?url:`https://${headers.host}${url}`;
 		const purl=new URL(u), id=Date.now(); headers.host=purl.host;
-		reqPipe(purl, {ca:scert, method, headers:{...headers,[uname]:ourl,[tname]:t}, minVersion:'TLSv1.3'}, res)
+		reqPipe(purl, {ca:ca?'':cert, method, headers:{...headers,[uname]:ourl,[tname]:t}, minVersion:'TLSv1.3'}, res)
 			.on('socket', socket=>logcb(id,socket.getProtocol())(method,ourl))
 			.on('error', errcb(id,method,ourl));
 	}
@@ -33,9 +33,9 @@ const proxy = async()=>{
 			}).on('error', errcb('mitm[error]'));
 	}).listen(port,bind, logcb('proxy running...')));
 }
-const server = async()=>{
-	let {uname,tname,t,sport,skey,scert}=JSON.parse(fs.readFileSync('./server.json'));
-	ca.load(skey,scert);
+const server = async(spath)=>{
+	const {uname,tname,t,port,kpair}=JSON.parse(fs.readFileSync(spath));
+	cajs.load(kpair);
 	https.createServer({SNICallback, minVersion:'TLSv1.3'}, (req, res)=>{
 		const {method, headers}=req;
 		if(headers[tname]===t){
@@ -45,23 +45,23 @@ const server = async()=>{
 				.on('socket', socket=>logcb(id)(method,ourl.href))
 				.on('error', errcb(id,method,ourl.href));
 		}else{ res.writeHead(404); res.end(); }
-	}).listen(sport, logcb('server running...'));
+	}).listen(port, logcb('server running...'));
 }
-const init = async()=>{
-	let uname,tname,t,u,port,sport,skey,scert,mport,mkey,mcert,bind='0.0.0.0';
+const init = async(cpath,apath,spath, uname,tname,t,u,port,sport,mport,bind='0.0.0.0')=>{
 	const rl=readline.createInterface({input:process.stdin, output:process.stdout});
-	const q=(text,answer)=>new Promise(res=>rl.question(text,res)).then(answer);
-	await q('access token(*): ', i=>t=i);
-	await q('server url(*): ', i=>u=i);
-	await q('certifcate issuer(*) [magent]: ', i=>ca.gen(i,2).then(e=>[skey,scert,mkey,mcert]=e));
-	await q(`server port [443]: `, i=>sport=parseInt(i||443));
-	await q(`proxy port [6580]: `, i=>port=parseInt(i||6580));
-	await q(`mitm port [65443]: `, i=>mport=parseInt(i||65443));
-	await q(`http header uname [magent-u]: `, i=>uname=i||'magent-u');
-	await q(`http header tname [magent-t]: `, i=>tname=i||'magent-t');
+	const q=text=>new Promise(res=>rl.question(text,res));
+	const [kpair,{key,cert}]=await cajs.gen(await q('Certifcate Issuer(*) [magent]: ')||'magent');
+	u=u||await q('Server URL(*): ');
+	sport=parseInt(sport||await q(`Server Port [443]: `)||443);
+	port=parseInt(port||await q(`Proxy Port [6580]: `)||6580);
+	mport=parseInt(mport||await q(`MITM Port [65443]: `)||65443);
+	t=t||await q('Access Token [random]: ')||Math.random().toString(36).slice(2);
+	uname=uname||await q(`UNAME [magent-u]: `)||'magent-u';
+	tname=tname||await q(`TNAME [magent-t]: `)||'magent-t';
 	rl.close();
-	fs.writeFileSync('./server.json', JSON.stringify({uname,tname,t,sport,skey,scert}));
-	fs.writeFileSync('./config.json', JSON.stringify({uname,tname,u,t,bind,port,mport,mkey,mcert,scert}));
-	fs.writeFileSync('./ca.crt', mcert);
+	fs.writeFileSync(cpath, JSON.stringify({uname,tname,u,t,bind,port,mport,kpair,cert}));
+	fs.writeFileSync(apath, kpair.cert);
+	fs.writeFileSync(spath, JSON.stringify({uname,tname,t,port:sport,kpair:{key,cert}}));
+	return {uname,tname,u,t,bind,port,sport,mport}
 }
 module.exports = { proxy, server, init };

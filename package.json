@@ -4,22 +4,13 @@
   "index":"index.js",
   "bin": "cli.js",
   "description": "A local MITM HTTP(s) request message proxy server",
-  "keywords": [
-    "proxy",
-    "HTTP(s)",
-    "MITM"
-  ],
+  "keywords": [ "proxy", "HTTP(s)", "MITM" ],
   "homepage": "https://github.com/DNetL/magent#readme",
-  "bugs": {
-    "url": "https://github.com/DNetL/magent/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/DNetL/magent.git"
-  },
+  "bugs": {"url":"https://github.com/DNetL/magent/issues"},
+  "repository": {"type":"git", "url":"git+https://github.com/DNetL/magent.git"},
   "dependencies": {
     "node-forge": "^0.9.1"
   },
-  "license": "MIT",
-  "version": "1.0.2"
+  "version": "1.0.3",
+  "license": "MIT"
 }

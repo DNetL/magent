@@ -12,14 +12,14 @@ const create = async(a)=>{
 	Object.assign(cert.validity, {notBefore:new Date(time-864e5), notAfter:new Date(time+a)});
 	return {key:kpair.privateKey, cert}
 }
-const gen = async(issuer='magent', num)=>{
+const gen = async(issuer='magent')=>{
 	let i=0, ret=[];
-	while(i++<num) await create(864e8).then(({key,cert})=>{
+	while(i++<2) await create(864e8).then(({key,cert})=>{
 		cert.setSubject([{shortName:'CN', value:issuer}]);
 		cert.setIssuer([{shortName:'CN', value:issuer}]);
 		cert.setExtensions([{name:'basicConstraints', critical:true, cA:true}]);
 		cert.sign(key, forge.md.sha256.create());
-		ret.push(pki.privateKeyToPem(key), pki.certificateToPem(cert));
+		ret.push({key:pki.privateKeyToPem(key), cert:pki.certificateToPem(cert)});
 	});
 	return ret;
 }
@@ -32,7 +32,7 @@ const cert = async(host)=>{
 		return certMaps[host]={key:pki.privateKeyToPem(key), cert:pki.certificateToPem(cert)};
 	});
 }
-const load = (key,cert)=>{
+const load = ({key,cert})=>{
 	caKey = pki.privateKeyFromPem(key);
 	caCert = pki.certificateFromPem(cert);
 }
