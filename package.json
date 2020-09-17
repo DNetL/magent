@@ -9,7 +9,7 @@
   "bugs": {"url":"https://github.com/DNetL/magent/issues"},
   "repository": {"type":"git", "url":"git+https://github.com/DNetL/magent.git"},
   "dependencies": {
-    "node-forge": "^0.9.1"
+    "node-forge": "^0.10.0"
   },
   "version": "1.0.3",
   "license": "MIT"
